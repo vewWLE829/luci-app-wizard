@@ -1,0 +1,45 @@
+name: 编译 ImmortalWrt 插件包
+
+on:
+  push:
+    branches:
+      - master        # 每次推送代码自动触发
+  workflow_dispatch:  # 也可以在 Actions 页面手动点击触发
+
+jobs:
+  build:
+    name: 编译 ${{ matrix.arch }} 架构
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch:
+          # ImmortalWrt 24.10+ 的架构标签，编译出 .apk 格式
+          # 按你路由器实际架构保留对应行，不需要的可以删掉
+          - x86_64          # x86 软路由
+          - aarch64_cortex-a53  # 大部分 ARM 家用路由器
+
+    steps:
+      # 1. 拉取插件源码（就是这个仓库本身）
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. 用 ImmortalWrt 官方 Action 调用 SDK 编译
+      - name: 编译插件
+        uses: immortalwrt/gh-action-sdk@master
+        env:
+          ARCH: ${{ matrix.arch }}
+          # 指定用 ImmortalWrt 24.10 版本的 SDK，这样产物是 .apk 格式
+          # 如果想要旧版 .ipk 格式，把下面这行删掉即可
+          CONTAINER: immortalwrt/sdk:x86-64-openwrt-24.10
+
+      # 3. 上传编译好的包，在 Actions 页面可以下载
+      - name: 上传编译产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-wizard-${{ matrix.arch }}
+          # 24.10+ 是 .apk 格式；旧版是 .ipk，改后缀即可
+          path: |
+            bin/packages/${{ matrix.arch }}/**/*.apk
+            bin/packages/${{ matrix.arch }}/**/*.ipk
