@@ -34,7 +34,7 @@ jobs:
 
       # 3️⃣ 上传编译产物
       - name: Store packages
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.arch}}-packages
           # artifact 名称，例如：
