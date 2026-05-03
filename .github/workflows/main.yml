@@ -38,6 +38,6 @@ jobs:
           # artifact 名称，例如：
           # x86_64-packages / mips_24kc-packages
 
-          path: bin/packages/${{ matrix.arch }}/packages/*.ipk
+          path: bin/packages/${{ matrix.arch }}/packages/*.apk
           # 只上传 .ipk 安装包
           # ⚠️ 如果 SDK 生成 .apk，这里不会被上传（容易踩坑）
