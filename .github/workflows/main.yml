@@ -3,7 +3,7 @@ name: Test Build
 on:
   pull_request:
     branches:
-      - master   # 当 PR 目标分支是 master 时触发构建
+      - main   # 当 PR 目标分支是 master 时触发构建
 
 jobs:
   build:
