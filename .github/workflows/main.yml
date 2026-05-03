@@ -72,7 +72,8 @@ jobs:
       - name: Upload to release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ github.ref_name }}          # Release 名称使用触发的 tag 名（如 v1.0.0）
+          name: luci-app-wizard                 # 固定的 Release 名字
+          tag: latest                           # 固定的 tag，每次都覆盖这个
           token: ${{ secrets.GITHUB_TOKEN }}    # 使用仓库自带的 Token 进行鉴权，无需手动配置
           allowUpdates: true                    # 允许更新已存在的 Release（多个矩阵任务写同一个 Release）
           replacesArtifacts: true               # 同名文件直接覆盖，避免重复
