@@ -1,45 +1,43 @@
-name: 编译 ImmortalWrt 插件包
+name: Test Build
 
 on:
-  push:
+  pull_request:
     branches:
-      - master        # 每次推送代码自动触发
-  workflow_dispatch:  # 也可以在 Actions 页面手动点击触发
+      - master   # 当 PR 目标分支是 master 时触发构建
 
 jobs:
   build:
-    name: 编译 ${{ matrix.arch }} 架构
-    runs-on: ubuntu-latest
+    name: ${{ matrix.arch }} build  # job 名称会显示当前构建架构
+    runs-on: ubuntu-latest          # 使用 GitHub 提供的 Ubuntu runner
 
     strategy:
       matrix:
         arch:
-          # ImmortalWrt 24.10+ 的架构标签，编译出 .apk 格式
-          # 按你路由器实际架构保留对应行，不需要的可以删掉
-          - x86_64          # x86 软路由
-          - aarch64_cortex-a53  # 大部分 ARM 家用路由器
+          - x86_64-25.12.0-rc1     # 第一种构建目标架构：x86 64位
+          - mips_24kc-25.12.0-rc1  # 第二种构建目标架构：MIPS 24kc（路由器常见）
 
     steps:
-      # 1. 拉取插件源码（就是这个仓库本身）
-      - uses: actions/checkout@v4
+      # 1️⃣ 拉取代码
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 0   # 拉取完整 git 历史（避免浅克隆问题）
 
-      # 2. 用 ImmortalWrt 官方 Action 调用 SDK 编译
-      - name: 编译插件
+      # 2️⃣ 编译 OpenWrt/ImmortalWrt package
+      - name: Build
         uses: immortalwrt/gh-action-sdk@master
         env:
           ARCH: ${{ matrix.arch }}
-          # 指定用 ImmortalWrt 24.10 版本的 SDK，这样产物是 .apk 格式
-          # 如果想要旧版 .ipk 格式，把下面这行删掉即可
-          CONTAINER: immortalwrt/sdk:x86-64-openwrt-24.10
+          # 指定当前构建架构
+          # 实际会触发 SDK 容器构建对应平台的 package
 
-      # 3. 上传编译好的包，在 Actions 页面可以下载
-      - name: 上传编译产物
-        uses: actions/upload-artifact@v4
+      # 3️⃣ 上传编译产物
+      - name: Store packages
+        uses: actions/upload-artifact@v2
         with:
-          name: luci-app-wizard-${{ matrix.arch }}
-          # 24.10+ 是 .apk 格式；旧版是 .ipk，改后缀即可
-          path: |
-            bin/packages/${{ matrix.arch }}/**/*.apk
-            bin/packages/${{ matrix.arch }}/**/*.ipk
+          name: ${{ matrix.arch}}-packages
+          # artifact 名称，例如：
+          # x86_64-packages / mips_24kc-packages
+
+          path: bin/packages/${{ matrix.arch }}/packages/*.ipk
+          # 只上传 .ipk 安装包
+          # ⚠️ 如果 SDK 生成 .apk，这里不会被上传（容易踩坑）
