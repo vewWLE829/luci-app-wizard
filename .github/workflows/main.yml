@@ -40,7 +40,7 @@ jobs:
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}  # 传入当前矩阵的 架构-SDK 组合
           FEEDNAME: packages_ci                        # 自定义 feed 源名称
-          PACKAGES: luci-app-lucky                     # 指定要构建的软件包名
+          PACKAGES: luci-app-wizard                     # 指定要构建的软件包名
           NO_REFRESH_CHECK: true                       # 跳过 feed 刷新检查，加快构建速度
 
       # Step 3：将构建产物上传为 GitHub Actions Artifact（可在 Actions 页面下载）
