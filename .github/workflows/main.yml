@@ -1,87 +1,9 @@
-name: Build Packages
-
-# 触发条件
 on:
-  workflow_dispatch:        # 支持在 GitHub Actions 页面手动触发
-
+  workflow_dispatch:
+    
 jobs:
-  build:
-    name: Build ${{ matrix.arch }}-${{ matrix.sdk }}
-    runs-on: ubuntu-latest 
-
-    strategy:
-      fail-fast: false      # 某个矩阵任务失败后，不中断其他任务，继续跑完所有组合
-      matrix:
-        # 目标架构列表：涵盖路由器常见 CPU 架构
-        arch:
-          # - aarch64_cortex-a53   # ARM 64位，常见于入门级路由（如部分 MT7622 设备）
-          # - aarch64_cortex-a72   # ARM 64位，中高端路由（如树莓派4、部分 IPQ8074）
-          # - aarch64_cortex-a76   # ARM 64位，高性能核心
-          # - aarch64_generic      # ARM 64位通用
-          # - arm_cortex-a7        # ARM 32位，常见于低端路由（如 MT7628）
-          # - arm_cortex-a9        # ARM 32位，较老的中端平台
-          # - mips_24kc            # MIPS 大端，经典路由架构（如 AR9331、MT7621）
-          # - mipsel_24kc          # MIPS 小端，常见于联发科路由（如 MT7620）
-          # - riscv64_riscv64      # RISC-V 64位，新兴开源指令集架构
-          - x86_64               # x86 64位，软路由（如 PC、N100 等）
-        # 目标 SDK 版本列表
-        sdk:
-          - openwrt-25.12    
-
+  placeholder:
+    runs-on: ubuntu-latest
+    if: false        # 永远不会执行
     steps:
-      - name: Check branch
-        if: github.ref_name != 'dev'
-        run: |
-          echo "只能在dev分支上构建"
-          exit 1
-      
-      # Step 1：检出当前仓库代码
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0         # 拉取完整 git 历史，而非浅克隆（版本号计算等场景需要）
-
-      # Step 2：使用第三方 Action 构建 OpenWrt 软件包
-      - name: Build packages
-        uses: sbwml/openwrt-gh-action-sdk@go1.25   # 基于 go1.25 分支的 SDK 构建工具
-        env:
-          ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}  # 传入当前矩阵的 架构-SDK 组合
-          FEEDNAME: packages_ci                        # 自定义 feed 源名称
-          PACKAGES: luci-app-wizard                     # 指定要构建的软件包名
-          NO_REFRESH_CHECK: true                       # 跳过 feed 刷新检查，加快构建速度
-
-      # Step 3：将构建产物上传为 GitHub Actions Artifact（可在 Actions 页面下载）
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.arch }}-${{ matrix.sdk }}  # Artifact 名称与矩阵组合一致
-          path: |
-            # 上传对应架构下的 .apk 包（OpenWrt 24.10+ 新格式）
-            bin/packages/${{ matrix.arch }}/packages_ci/*.apk
-            # riscv64 的特殊路径（SDK 输出目录名与架构名不同，用 generic 替代）
-            bin/packages/riscv64_generic/packages_ci/*.apk
-            # 上传对应架构下的 .ipk 包（传统格式，兼容旧版 OpenWrt）
-            bin/packages/${{ matrix.arch }}/packages_ci/*.ipk
-
-      # Step 4：将构建产物打包为 .tar.gz，准备上传到 Release
-      - name: Create release archive
-        run: |
-          # riscv64 架构在 SNAPSHOT 版本下，SDK 输出目录名为 riscv64_generic 而非 riscv64_riscv64
-          # 需要单独处理路径，避免打包失败
-          if [ "${{ matrix.arch }}" = "riscv64_riscv64" ] && [ "${{ matrix.sdk }}" = "SNAPSHOT" ]; then
-            tar -zcvf ${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz -C bin/packages/riscv64_generic/ packages_ci
-          else
-            # 其他架构直接使用矩阵中的 arch 名作为路径
-            tar -zcvf ${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz -C bin/packages/${{ matrix.arch }}/ packages_ci
-          fi
-
-      # Step 5：将 .tar.gz 包上传到对应 tag 的 GitHub Release
-      - name: Upload to release
-        uses: ncipollo/release-action@v1
-        with:
-          name: luci-app-wizard                 # 固定的 Release 名字
-          tag: latest                           # 固定的 tag，每次都覆盖这个
-          token: ${{ secrets.GITHUB_TOKEN }}    # 使用仓库自带的 Token 进行鉴权，无需手动配置
-          allowUpdates: true                    # 允许更新已存在的 Release（多个矩阵任务写同一个 Release）
-          replacesArtifacts: true               # 同名文件直接覆盖，避免重复
-          prerelease: false                     # 标记为正式版，而非预发布版
-          artifacts: "luci-app-wizard_for_${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz"  # 指定要上传的压缩包
+      - run: echo "placeholder"
