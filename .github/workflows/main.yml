@@ -78,4 +78,4 @@ jobs:
           allowUpdates: true                    # 允许更新已存在的 Release（多个矩阵任务写同一个 Release）
           replacesArtifacts: true               # 同名文件直接覆盖，避免重复
           prerelease: false                     # 标记为正式版，而非预发布版
-          artifacts: "${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz"  # 指定要上传的压缩包
+          artifacts: "luci-app-wizard_for_${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz"  # 指定要上传的压缩包
