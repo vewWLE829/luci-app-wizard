@@ -26,7 +26,7 @@ jobs:
           - x86_64               # x86 64位，软路由（如 PC、N100 等）
         # 目标 SDK 版本列表
         sdk:
-          - openwrt-25.12.0-rc2        
+          - openwrt-25.12    
 
     steps:
       # Step 1：检出当前仓库代码
