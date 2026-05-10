@@ -2,10 +2,71 @@ name: Build Packages
 
 on:
   workflow_dispatch:
-    
+
 jobs:
-  placeholder:
+  build:
     runs-on: ubuntu-latest
-    if: false        # 永远不会执行
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - x86_64
+        sdk:
+          - openwrt-25.12
+
     steps:
-      - run: echo "placeholder"
+      # 检出代码
+      - uses: actions/checkout@v4
+
+      # 关键步骤：构造 OpenWrt feed 结构
+      - name: Prepare package structure
+        run: |
+          mkdir -p package/luci-app-wizard
+
+          shopt -s dotglob
+
+          for file in *; do
+            if [ "$file" != "package" ]; then
+              cp -r "$file" package/luci-app-wizard/
+            fi
+          done
+
+          echo "目录结构："
+          tree package/luci-app-wizard || true
+
+      # 编译
+      - name: Build packages
+        uses: sbwml/openwrt-gh-action-sdk@go1.25
+        env:
+          ARCH: ${{ matrix.arch }}-${{ matrix.sdk }}
+          FEEDNAME: packages_ci
+          PACKAGES: luci-app-wizard
+          NO_REFRESH_CHECK: true
+
+      # 上传 ipk
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.arch }}-${{ matrix.sdk }}
+          path: |
+            bin/packages/${{ matrix.arch }}/packages_ci/*.ipk
+            bin/packages/${{ matrix.arch }}/packages_ci/*.apk
+
+      # 打 tar.gz
+      - name: Create release archive
+        run: |
+          tar -zcvf luci-app-wizard_${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz \
+            -C bin/packages/${{ matrix.arch }}/ packages_ci
+
+      # 发布 Release
+      - name: Upload to release
+        uses: ncipollo/release-action@v1
+        with:
+          name: luci-app-wizard
+          tag: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          replacesArtifacts: true
+          prerelease: false
+          artifacts: "luci-app-wizard_${{ matrix.sdk }}-${{ matrix.arch }}.tar.gz"
